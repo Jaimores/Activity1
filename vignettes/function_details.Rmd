@@ -1,0 +1,168 @@
+---
+title: "Activity1  - Vignette"
+author: "Jaime Mosquera Restrepo"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Activity1  - Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+knitr::opts_knit$set(root.dir = dirname(getwd()))
+```
+
+```{r, include = FALSE}
+library(dplyr)
+library(tidyr)
+library(graphics)
+
+make_filename <- function(year) {
+        year <- as.integer(year)
+        sprintf("accident_%d.csv.bz2", year)
+}
+fars_read <- function(filename) {
+        if(!file.exists(filename))
+                stop("file '", filename, "' does not exist")
+        data <- suppressMessages({
+                readr::read_csv(filename, progress = FALSE)
+        })
+        dplyr::tbl_df(data)
+}
+
+fars_summarize_years <- function(years) {
+        dat_list <- fars_read_years(years)
+        dplyr::bind_rows(dat_list) %>%
+                dplyr::group_by(year, MONTH) %>%
+                dplyr::summarize(n = n()) %>%
+                tidyr::spread(year,n)}
+ 
+fars_read_years <- function(years) {
+        lapply(years, function(year) {
+                file <- make_filename(year)
+                tryCatch({
+                        dat <- fars_read(file)
+                        dplyr::mutate(dat, year = year) %>%
+                                dplyr::select(MONTH, year)
+                }, error = function(e) {
+                        warning("invalid year: ", year)
+                        return(NULL)
+                })
+        })
+}
+
+fars_map_state <- function(state.num, year) {
+        filename <- make_filename(year)
+        data <- fars_read(filename)
+        state.num <- as.integer(state.num)
+
+        if(!(state.num %in% unique(data$STATE)))
+                stop("invalid STATE number: ", state.num)
+        data.sub <- dplyr::filter(data, STATE == state.num)
+        if(nrow(data.sub) == 0L) {
+                message("no accidents to plot")
+                return(invisible(NULL))
+        }
+        is.na(data.sub$LONGITUD) <- data.sub$LONGITUD > 900
+        is.na(data.sub$LATITUDE) <- data.sub$LATITUDE > 90
+        with(data.sub, {
+                maps::map("state", ylim = range(LATITUDE, na.rm = TRUE),
+                          xlim = range(LONGITUD, na.rm = TRUE))
+                graphics::points(LONGITUD, LATITUDE, pch = 46)
+        })
+}
+```
+\newline
+The `Activity1` package has been create to validate the elements learned in the course  [`Building R Packages`](https://www.coursera.org/learn/r-packages#). The `Activity1` package contains five functions designed to facilite the read and summary of the available data in the [US National Highway Traffic Safety Administration's Fatality Analysis Reporting System](https://www.nhtsa.gov/research-data/fatality-analysis-reporting-system-fars) (FARS), which is a nationwide census providing the American public yearly data regarding fatal injuries suffered in motor vehicle traffic crashes. Those functions are: 
+
+
+* `fars_read`  
+* `make_filename`  
+* `fars_read_years`  
+* `fars_summarize_years`   
+* `fars_map_state`  
+
+A description of the usefulness of these functions with practical examples are included in this vignette.    
+
+# `fars_read`  
+
+The function `fars_read(filename)` search a CSV file named `filename`, locate in the working directory, and read it as a `tibble` object. The `tibble` objects are an efficient structure to storage and handling a `data.frame`. See more details about `tibble` objects in [CRAN](https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html).
+
+###Example 
+The file `accident_2013.csv.bz2` may be download from [FARS](https://www.nhtsa.gov/research-data/fatality-analysis-reporting-system-fars). This file contain the record of fatal injuries suffered in motor vehicle traffic crashes in USA for a especified `year`. This file should be download to working directory. The `fars_read` function is used to read it to R enviroment like it is show in the next example.
+
+```{r }
+Accident_2013<-fars_read("accident_2013.csv.bz2")
+Accident_2013[1:10,1:10]
+```
+In the example the `accident_2013.csv.bz2`  is read to R enviroment and a sample (10 x 10) is show.
+
+
+# `make_filename`
+
+The function `make_filename(year)` merge the input `year` with the root filename "accident.csv.bz2" to generate the new filename `accident_`**year**`.csv.bz2`. This new file name is the one required to read the injury data associated to especified year desired by the user.
+
+###Example 
+  
+```{r }
+years<-c(2013,2014)
+filenames<- c(make_filename(years[1]),make_filename(years[2]))
+Accident<-list("2013"=fars_read(filenames[1]),"2014"=fars_read(filenames[2]))
+Accident$"2013"[1:10,1:10] 
+```
+
+In this example, the proper filenames associated to 2013 and 2014 years has been created (lines 1 and 2). So this filenames are used (line 3) to read both files and storage them in the list `Accident`. The fourth code line shows a sample (10 x 10) of data for the year 2013.
+
+
+# `fars_read_years`
+
+The function `fars_read_years(years)` create a list with the Month - Year variables associated a the injuries records for the years especified by the user in the input `years`. Each item on the list corresponds to one year and each row corresponds to an injury record.
+
+###Example 
+
+```{r Records1, message=FALSE, warning=FALSE}
+years<-c(2013,2014)
+records<-fars_read_years(years)
+names(records)<-years
+id<-base::sample(1:nrow(records$"2013"),10,replace=F)
+records$"2013"[id,]
+```
+
+The table in the example shows a sample of ten records of injuries happened in the year 2013
+
+# `fars_summarize_years` 
+
+The function `fars_summarize_years(years)` generate a summary of the total number of fatal accidents grouped by Month/Year. This summary is generated for those years especified by user in the input `years`.
+
+###Example 
+
+```{r Records2, message=FALSE, warning=FALSE}
+years<-c(2013,2014,2015)
+records<-fars_summarize_years(years)
+records
+```
+
+The table of the example summarizes the total number of accidents that occurred in the USA during the period 2013-2015.
+
+# `fars_map_state`
+
+The function `fars_map_state(state.id,year)` generate a plot with the pattern points of fatal accidents that happened in an especified state (`state.id`) during a especified year (`year`).
+
+
+###Example 
+
+```{r Maps, message=FALSE, warning=FALSE}
+state.num<-4
+years<-c(2013,2014) 
+for (year in years){
+     fars_map_state(state.num,year)
+     title(paste( "Map of Injuries - State.num = ",state.num),xlab=paste("Year = ",year))
+          }
+```
+
+The example code generates the maps of injuries that happened in Arizona state (`state.num = 4`) in the years 2013 - 2014.
