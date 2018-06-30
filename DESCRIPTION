@@ -4,7 +4,7 @@ Title: Test Package for Activity 1
 Version: 0.1.0
 Author: Jaime Mosquera Restrepo
 Maintainer: The package maintainer <jaimores@gmail.com>
-Description: The Activity1 package has been create to validate the elements learned in the course Building R Packages.
+Description: The .Activity1 package has been create to validate the elements learned in the course Building R Packages.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
