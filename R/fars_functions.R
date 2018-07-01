@@ -74,7 +74,8 @@ make_filename <- function(year) {
 #'
 #' @return This function return a list of tibble object with the Month and Year variables
 #'
-#' @importFrom dplyr mutate select
+#' @importFrom dplyr mutate select %>%
+#' @importFrom rlang .data
 #'
 #' @examples
 #'\dontrun{
@@ -90,7 +91,7 @@ fars_read_years <- function(years) {
                 tryCatch({
                         dat <- fars_read(file)
                         dplyr::mutate(dat, year = year) %>%
-                                dplyr::select(MONTH, year)
+                                dplyr::select(.data$MONTH, .data$year)
                 }, error = function(e) {
                         warning("invalid year: ", year)
                         return(NULL)
@@ -120,15 +121,16 @@ fars_read_years <- function(years) {
 #'}
 #' @importFrom dplyr bind_rows group_by summarize %>% n
 #' @importFrom tidyr spread
+#' @importFrom rlang .data
 #'
 #' @export
 
 fars_summarize_years <- function(years) {
         dat_list <- fars_read_years(years)
         dplyr::bind_rows(dat_list) %>%
-                dplyr::group_by(year, MONTH) %>%
+                dplyr::group_by(.data$year, .data$MONTH) %>%
                 dplyr::summarize(n = n()) %>%
-                tidyr::spread(year, n)
+                tidyr::spread(.data$year, n)
 }
 
 
@@ -168,7 +170,7 @@ fars_map_state <- function(state.num, year) {
 
         if(!(state.num %in% unique(data$STATE)))
                 stop("invalid STATE number: ", state.num)
-        data.sub <- dplyr::filter(data, STATE == state.num)
+        data.sub <- dplyr::filter(data, data$STATE== state.num)
         if(nrow(data.sub) == 0L) {
                 message("no accidents to plot")
                 return(invisible(NULL))
@@ -176,7 +178,7 @@ fars_map_state <- function(state.num, year) {
         is.na(data.sub$LONGITUD) <- data.sub$LONGITUD > 900
         is.na(data.sub$LATITUDE) <- data.sub$LATITUDE > 90
         with(data.sub, {
-                maps::map("state", ylim = range(LATITUDE, na.rm = TRUE),
+                maps::map("state", ylim = range( LATITUDE, na.rm = TRUE),
                           xlim = range(LONGITUD, na.rm = TRUE))
                 graphics::points(LONGITUD, LATITUDE, pch = 46)
         })
