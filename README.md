@@ -11,5 +11,5 @@ The `Activity1` package has been create to validate the elements learned in the 
 * `fars_summarize_years`   
 * `fars_map_state`  
 
-A description of the usefulness of these functions with practical examples are included in The vignette file.
+A description of the usefulness of these functions with practical examples are included in the vignette file.
 ---
