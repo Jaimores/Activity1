@@ -39,7 +39,7 @@ fars_summarize_years <- function(years) {
         dat_list <- fars_read_years(years)
         dplyr::bind_rows(dat_list) %>%
                 dplyr::group_by(year, MONTH) %>%
-                dplyr::summarize(n = n()) %>%
+                dplyr::summarize(n = n()) %>% 
                 tidyr::spread(year,n)}
  
 fars_read_years <- function(years) {
@@ -78,7 +78,7 @@ fars_map_state <- function(state.num, year) {
 }
 ```
 \newline
-The `Activity1` package has been create to validate the elements learned in the course  [`Building R Packages`](https://www.coursera.org/learn/r-packages#). The `Activity1` package contains five functions designed to facilite the read and summary of the available data in the [US National Highway Traffic Safety Administration's Fatality Analysis Reporting System](https://www.nhtsa.gov/research-data/fatality-analysis-reporting-system-fars) (FARS), which is a nationwide census providing the American public yearly data regarding fatal injuries suffered in motor vehicle traffic crashes. Those functions are: 
+The `Activity1` package has been create to validate the elements learned in the course  [`Building R Packages`](https://www.coursera.org/learn/r-packages). The `Activity1` package contains five functions designed to facilite the read and summary of the available data in the [US National Highway Traffic Safety Administration's Fatality Analysis Reporting System](https://www.nhtsa.gov/research-data/fatality-analysis-reporting-system-fars) (FARS), which is a nationwide census providing the American public yearly data regarding fatal injuries suffered in motor vehicle traffic crashes. Those functions are: 
 
 
 * `fars_read`  
@@ -97,8 +97,10 @@ The function `fars_read(filename)` search a CSV file named `filename`, locate in
 The file `accident_2013.csv.bz2` may be download from [FARS](https://www.nhtsa.gov/research-data/fatality-analysis-reporting-system-fars). This file contain the record of fatal injuries suffered in motor vehicle traffic crashes in USA for a especified `year`. This file should be download to working directory. The `fars_read` function is used to read it to R enviroment like it is show in the next example.
 
 ```{r }
+setwd(dirname("accident_2013.csv.bz2"))
 Accident_2013<-fars_read("accident_2013.csv.bz2")
 Accident_2013[1:10,1:10]
+
 ```
 In the example the `accident_2013.csv.bz2`  is read to R enviroment and a sample (10 x 10) is show.
 
@@ -126,6 +128,7 @@ The function `fars_read_years(years)` create a list with the Month - Year variab
 ###Example 
 
 ```{r Records1, message=FALSE, warning=FALSE}
+setwd(dirname("accident_2013.csv.bz2"))
 years<-c(2013,2014)
 records<-fars_read_years(years)
 names(records)<-years
@@ -142,6 +145,7 @@ The function `fars_summarize_years(years)` generate a summary of the total numbe
 ###Example 
 
 ```{r Records2, message=FALSE, warning=FALSE}
+setwd(dirname("accident_2013.csv.bz2"))
 years<-c(2013,2014,2015)
 records<-fars_summarize_years(years)
 records
@@ -159,6 +163,7 @@ The function `fars_map_state(state.id,year)` generate a plot with the pattern po
 ```{r Maps, message=FALSE, warning=FALSE}
 state.num<-4
 years<-c(2013,2014) 
+setwd(dirname("accident_2013.csv.bz2"))
 for (year in years){
      fars_map_state(state.num,year)
      title(paste( "Map of Injuries - State.num = ",state.num),xlab=paste("Year = ",year))
